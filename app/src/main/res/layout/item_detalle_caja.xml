@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- Vista básica: Código y nombre del cortador -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvCortador"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cortador: "
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnExpandCollapse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_expand"
+            android:background="@null" />
+        </LinearLayout>
+
+        <!-- Detalle expandible -->
+        <LinearLayout
+            android:id="@+id/detalleLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingTop="8dp">
+
+            <TextView
+                android:id="@+id/tvLote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lote: "
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvVariedad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Variedad: "
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvPresentacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Presentación: "
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvDestino"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Destino: "
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvCantidad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cantidad: "
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvClasificador"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Clasificador: "
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

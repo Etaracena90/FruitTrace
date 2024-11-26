@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Estado presionado -->
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="@color/purple_700" /> <!-- Color más oscuro al presionar -->
+            <corners android:radius="50dp" /> <!-- Borde redondeado -->
+            <padding android:left="16dp" android:right="16dp" android:top="8dp" android:bottom="8dp"/>
+            <stroke android:width="2dp" android:color="@android:color/white" /> <!-- Contorno blanco -->
+        </shape>
+    </item>
+
+    <!-- Estado habilitado -->
+    <item android:state_enabled="true">
+        <shape>
+            <solid android:color="@color/purple_500" /> <!-- Color por defecto -->
+            <corners android:radius="50dp" /> <!-- Borde redondeado -->
+            <padding android:left="16dp" android:right="16dp" android:top="8dp" android:bottom="8dp"/>
+            <stroke android:width="2dp" android:color="@android:color/white" /> <!-- Contorno blanco -->
+        </shape>
+    </item>
+
+    <!-- Estado deshabilitado -->
+    <item android:state_enabled="false">
+        <shape>
+            <solid android:color="@android:color/darker_gray" /> <!-- Color para botón deshabilitado -->
+            <corners android:radius="50dp" /> <!-- Borde redondeado -->
+            <padding android:left="16dp" android:right="16dp" android:top="8dp" android:bottom="8dp"/>
+            <stroke android:width="2dp" android:color="@android:color/white" /> <!-- Contorno blanco -->
+        </shape>
+    </item>
+
+</selector>
