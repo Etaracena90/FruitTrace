@@ -8,18 +8,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+
 
 public class DAOCorte {
     private Conexion con;
     private Connection cn;
     private PreparedStatement ps;
     private ResultSet rs;
-
+    //Metodo Listar
     public List<Corte> listarCortePorUsuario(String usuario) throws Exception {
         List<Corte> listcorte = new ArrayList<>();
         con = new Conexion();
