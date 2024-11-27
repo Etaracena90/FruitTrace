@@ -6,14 +6,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.planesa.fruittrace.R;
 import com.planesa.fruittrace.adapter.CorteAdapter;
 import com.planesa.fruittrace.dao.DAOCorte;
 import com.planesa.fruittrace.model.Corte;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,6 +69,12 @@ public class MainActivity extends AppCompatActivity implements CorteAdapter.OnSc
             Toast.makeText(this, "Recargando documentos...", Toast.LENGTH_SHORT).show();
             cargarListaCorte(usuarioAutenticado); // Recargar la lista de documentos
         });
+
+        corteAdapter = new CorteAdapter(new ArrayList<>(), this, this);
+        corteAdapter.setOnDocumentoEnviadoListener(() -> cargarListaCorte(usuarioAutenticado));
+        rvCorte.setAdapter(corteAdapter);
+
+
     }
 
     @Override

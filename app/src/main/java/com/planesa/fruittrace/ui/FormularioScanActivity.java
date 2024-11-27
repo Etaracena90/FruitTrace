@@ -1,23 +1,23 @@
 package com.planesa.fruittrace.ui;
 
-import android.app.DownloadManager;
-import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.icu.text.DecimalFormat;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-
+import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.planesa.fruittrace.R;
@@ -32,18 +32,17 @@ import java.util.concurrent.Executors;
 
 public class FormularioScanActivity extends AppCompatActivity {
 
-    private TextView tvCantidadCajas;
-    private int cantidadCajasRegistradas = 0; // Inicializar en 0
-
-    private EditText etLote, etCortador, etVariedad, etClasificador;
-
-    String destino ="";
-    String etiqueta ="";
+    String destino = "";
+    String etiqueta = "";
     String presentacion = "";
-
     String um = "CJ";
-
     String dia = "NORMAL";
+    private TextView tvCantidadCajas;
+    private double cantidadCajasRegistradas = 0.0; // Inicializar en 0
+    private CheckBox cbGuardarManual; // Declarar la variable para el CheckBox
+    private EditText etCantidad; // Campo para ingresar la cantidad manual
+    private Button btnGuardarManual; // Declaración del botón
+    private EditText etLote, etCortador, etVariedad, etClasificador;
     private CheckBox checkboxShowActivity;
     private int currentScanIndex = 0; // Índice del input actual a llenar
     private int idCorte;
@@ -53,6 +52,57 @@ public class FormularioScanActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_formulario_scan);
+
+
+        // Referencias a los nuevos elementos
+        btnGuardarManual = findViewById(R.id.btnGuardarManual);
+        cbGuardarManual = findViewById(R.id.cbGuardarManual);
+        etCantidad = findViewById(R.id.etCantidad);
+        LinearLayout linearManualSave = findViewById(R.id.linearManualSave);
+
+        btnGuardarManual.setOnClickListener(v -> {
+            // Validar que el checkbox esté activado
+            if (!cbGuardarManual.isChecked()) {
+                Toast.makeText(this, "Activa el guardado manual antes de registrar.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Validar la cantidad ingresada
+            String cantidadStr = etCantidad.getText().toString().trim();
+            if (cantidadStr.isEmpty()) {
+                Toast.makeText(this, "Por favor ingresa una cantidad antes de guardar.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            try {
+                double cantidadManual = Double.parseDouble(cantidadStr);
+                if (cantidadManual <= 0) {
+                    Toast.makeText(this, "La cantidad debe ser mayor a 0.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Llama al método registerData con la cantidad válida
+                registerData(cantidadManual);
+
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Por favor ingresa un número válido.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+        // Configurar el comportamiento del CheckBox
+        cbGuardarManual.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                // Mostrar el contenedor de cantidad y botón guardar
+                linearManualSave.setVisibility(View.VISIBLE);
+            } else {
+                // Ocultar el contenedor y limpiar el campo de cantidad
+                linearManualSave.setVisibility(View.GONE);
+                EditText etCantidad = findViewById(R.id.etCantidad);
+                etCantidad.setText(""); // Limpiar la cantidad al desactivar el CheckBox
+            }
+        });
+
 
         // Inicializar el TextView para la cantidad de cajas
         tvCantidadCajas = findViewById(R.id.tvCantidadCajas);
@@ -65,7 +115,7 @@ public class FormularioScanActivity extends AppCompatActivity {
         ImageButton btnDetalleCajas = findViewById(R.id.btnDetalleCajas);
 
         // Obtener el ID del documento
-         idCorte = getIntent().getIntExtra("id_corte", -1);
+        idCorte = getIntent().getIntExtra("id_corte", -1);
 
         btnDetalleCajas.setOnClickListener(v -> {
             if (idCorte != -1) {
@@ -76,7 +126,6 @@ public class FormularioScanActivity extends AppCompatActivity {
                 Toast.makeText(FormularioScanActivity.this, "ID del documento inválido", Toast.LENGTH_SHORT).show();
             }
         });
-
 
 
         // Inicializar los TextView para mostrar los datos del documento
@@ -94,7 +143,6 @@ public class FormularioScanActivity extends AppCompatActivity {
         checkboxShowActivity = findViewById(R.id.checkbox_show_activity);
 
 
-
         // Configurar validaciones en tiempo real
         setUpInputValidation();
 
@@ -104,7 +152,6 @@ public class FormularioScanActivity extends AppCompatActivity {
         String usuarioAutenticado = getIntent().getStringExtra("usuario");
         Log.d("FormularioScanActivity", "ID recibido: " + idCorte);
         String apuntador = usuarioAutenticado; // Aquí obtén el apuntador de SharedPreferences o una sesión
-
 
 
         if (idCorte != -1) {
@@ -126,11 +173,19 @@ public class FormularioScanActivity extends AppCompatActivity {
             executor.execute(() -> {
                 try {
                     // Obtener la cantidad de cajas registradas desde la base de datos
-                    int cantidad = daoCorte.obtenerCantidadCajas(idCorte);
-                    runOnUiThread(() -> tvCantidadCajas.setText(String.valueOf(cantidad)));
+                    Double cantidad = daoCorte.obtenerCantidadCajas(idCorte);
 
-                    // Actualizar la variable para futuras actualizaciones
-                    cantidadCajasRegistradas = cantidad;
+                    // Formatear la cantidad a dos decimales
+                    DecimalFormat decimalFormat = new DecimalFormat("#.00");
+                    String cantidadFormateada = decimalFormat.format(cantidad);
+
+                    runOnUiThread(() -> {
+                        // Mostrar la cantidad formateada en el TextView
+                        tvCantidadCajas.setText(cantidadFormateada);
+                        // Actualizar la variable para futuras actualizaciones
+                        cantidadCajasRegistradas = cantidad;
+                    });
+
                 } catch (Exception e) {
                     runOnUiThread(() -> Toast.makeText(this, "Error al cargar la cantidad de cajas: " + e.getMessage(), Toast.LENGTH_LONG).show());
                 }
@@ -145,26 +200,39 @@ public class FormularioScanActivity extends AppCompatActivity {
     }
 
 
-
     private void actualizarCantidadCajas() {
-        // Incrementar el contador de cajas y actualizar el TextView
-        cantidadCajasRegistradas++;
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            try {
+                // Obtener la cantidad total desde la base de datos
+                double nuevaCantidad = daoCorte.obtenerCantidadCajas(idCorte); // Método que consulta la base de datos
 
-        tvCantidadCajas.setText(String.valueOf(cantidadCajasRegistradas));
+                runOnUiThread(() -> {
+                    // Formatear el número a 2 decimales
+                    DecimalFormat decimalFormat = new DecimalFormat("#.##");
+                    String cantidadFormateada = decimalFormat.format(nuevaCantidad);
+
+                    // Actualizar el TextView con la cantidad formateada
+                    tvCantidadCajas.setText(cantidadFormateada);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Error al actualizar la cantidad de cajas: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
     }
-
-
-
-
 
 
     private void setUpInputValidation() {
         etLote.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -177,10 +245,12 @@ public class FormularioScanActivity extends AppCompatActivity {
 
         etCortador.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -193,10 +263,12 @@ public class FormularioScanActivity extends AppCompatActivity {
 
         etVariedad.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -209,10 +281,12 @@ public class FormularioScanActivity extends AppCompatActivity {
 
         etClasificador.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -259,6 +333,7 @@ public class FormularioScanActivity extends AppCompatActivity {
             }
         });
     }
+
     private void cargarDatosCorte(int idCorte, String apuntador, TextView tvEnvio, TextView tvFecha,
                                   TextView tvFinca, TextView tvCultivo, TextView tvCodigoPTE) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -353,16 +428,40 @@ public class FormularioScanActivity extends AppCompatActivity {
             }
             currentScanIndex++;
 
-            // Continuar escaneando o registrar si están llenos
+            // Continuar escaneando o validar si se debe registrar
             if (currentScanIndex < 4) {
                 startScan(currentScanIndex);
             } else {
-                registerData();
+                // Verificar si el CheckBox está activo
+                if (cbGuardarManual.isChecked()) {
+                    // Obtener la cantidad manual ingresada
+                    String cantidadStr = etCantidad.getText().toString().trim();
+                    if (cantidadStr.isEmpty()) {
+                        mostrarMensajeDialog("Por favor, ingresa una cantidad antes de guardar.");
+                        return;
+                    }
+
+                    try {
+                        double cantidadManual = Double.parseDouble(cantidadStr);
+                        if (cantidadManual <= 0) {
+                            mostrarMensajeDialog("La cantidad debe ser mayor a cero.");
+                            return;
+                        }
+                        // Registrar datos con cantidad manual
+                        registerData(cantidadManual);
+                    } catch (NumberFormatException e) {
+                        mostrarMensajeDialog("Por favor, ingresa una cantidad válida.");
+                    }
+                } else {
+                    // Registrar datos con cantidad por defecto (1)
+                    registerData(1.0);
+                }
             }
         }
     }
 
-    private void registerData() {
+
+    private void registerData(double cantidadManual) {
         String lote = etLote.getText().toString();
         String cortador = etCortador.getText().toString();
         String variedad = etVariedad.getText().toString();
@@ -382,21 +481,39 @@ public class FormularioScanActivity extends AppCompatActivity {
         String codigoPTE = tvCodigoPTE.getText().toString().replace("Código PTE: ", "").trim();
 
         if (!lote.isEmpty() && !cortador.isEmpty() && !variedad.isEmpty() && !clasificador.isEmpty()) {
-            // Ejecutar la validación en un hilo de fondo
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
                 try {
-                    // Validar el lote
+                    // Validar los datos
                     boolean loteValido = daoCorte.validarLote(lote);
                     boolean cortadorValido = daoCorte.validarCortador(cortador);
                     boolean variedadValido = daoCorte.validarVariedad(variedad);
                     boolean clasificadorValido = daoCorte.validarClasificador(clasificador);
 
                     runOnUiThread(() -> {
-                        if (loteValido && cortadorValido && variedadValido && clasificadorValido ) {
-                            // Si el lote es válido, continuar con el registro
+                        if (loteValido && cortadorValido && variedadValido && clasificadorValido) {
+                            // Obtener la cantidad dependiendo del estado del CheckBox
+                            double cantidad = 1.0; // Por defecto, cantidad 1
+                            if (cbGuardarManual.isChecked()) {
+                                String cantidadStr = etCantidad.getText().toString().trim();
+                                if (cantidadStr.isEmpty()) {
+                                    mostrarMensajeDialog("Por favor, ingresa una cantidad antes de guardar.");
+                                    return;
+                                }
+                                try {
+                                    cantidad = Double.parseDouble(cantidadStr);
+                                    if (cantidad <= 0) {
+                                        mostrarMensajeDialog("La cantidad debe ser mayor a cero.");
+                                        return;
+                                    }
+                                } catch (NumberFormatException e) {
+                                    mostrarMensajeDialog("Por favor, ingresa una cantidad válida.");
+                                    return;
+                                }
+                            }
+
+                            // Crear objeto Corte
                             Corte corte = new Corte();
-                            // Asignar los datos del formulario
                             corte.setLote(lote);
                             corte.setCodigo_cortador(cortador);
                             corte.setVariedad(variedad);
@@ -405,24 +522,26 @@ public class FormularioScanActivity extends AppCompatActivity {
                             corte.setEtiqueta(etiqueta);
                             corte.setPresentacion(presentacion);
                             corte.setUnidad_medida(um);
-
-                            // Asignar los datos del documento
-                            corte.setId_enc_corte(Integer.parseInt(idDocumento)); // ID del documento
+                            corte.setCantidad(cantidad);
+                            corte.setId_enc_corte(Integer.parseInt(idDocumento));
                             corte.setFecha(fecha);
                             corte.setNombrefinca(finca);
                             corte.setNombre_cultivo(cultivo);
                             corte.setCodigo_pte(codigoPTE);
-                            corte.setDia("NORMAL"); // Configuración por defecto
+                            corte.setDia("NORMAL");
+                            corte.setCantidad(cantidadManual); // Aquí asignamos la cantidad
 
+                            // Limpiar errores previos
                             etLote.setError(null);
                             etCortador.setError(null);
                             etVariedad.setError(null);
                             etClasificador.setError(null);
 
+
                             // Registrar los datos
                             registrarCorte(corte);
                         } else {
-                            // Mostrar mensajes flotantes y errores visuales
+                            // Mostrar errores en los campos no válidos
                             if (!loteValido) {
                                 mostrarMensajeDialog("El lote no existe. Por favor, corríjalo.");
                                 etLote.setError("El lote no existe. Verifique el dato.");
@@ -437,21 +556,19 @@ public class FormularioScanActivity extends AppCompatActivity {
                             }
                             if (!clasificadorValido) {
                                 mostrarMensajeDialog("El clasificador no existe. Por favor, corríjalo.");
-                                etClasificador.setError("El clasificador  no existe. Verifique el dato.");
+                                etClasificador.setError("El clasificador no existe. Verifique el dato.");
                             }
-
                         }
                     });
                 } catch (Exception e) {
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "Error al validar el lote: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
+                    runOnUiThread(() -> Toast.makeText(this, "Error al validar los datos: " + e.getMessage(), Toast.LENGTH_LONG).show());
                 }
             });
         } else {
             Toast.makeText(this, "Por favor, completa todos los campos", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void mostrarMensajeDialog(String mensaje) {
         new AlertDialog.Builder(this)
                 .setTitle("Advertencia")
@@ -500,8 +617,8 @@ public class FormularioScanActivity extends AppCompatActivity {
         etCortador.setText("");
         etVariedad.setText("");
         etClasificador.setText("");
+        etCantidad.setText("");
     }
-
 
 
 }

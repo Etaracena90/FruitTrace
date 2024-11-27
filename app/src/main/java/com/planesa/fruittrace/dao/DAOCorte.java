@@ -8,11 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class DAOCorte {
     private Conexion con;
@@ -131,7 +128,7 @@ public class DAOCorte {
             ps.setString(9, corte.getPresentacion()); // Presentación (dato de prueba)
             ps.setString(10, corte.getEtiqueta()); // Etiqueta (dato de prueba)
             ps.setString(11, corte.getVariedad()); // Variedad (dato del objeto Corte)
-            ps.setDouble(12, 1.0); // Cantidad (dato de prueba)
+            ps.setDouble(12, corte.getCantidad()); // Cantidad (dato de prueba)
             ps.setString(13, corte.getUnidad_medida()); // Unidad de Medida (dato de prueba)
             ps.setString(14, "2024-11-20"); // Fecha para determinar el Día (dato de prueba)
 
@@ -150,6 +147,7 @@ public class DAOCorte {
         }
         return resultado;
     }
+
     public Corte leercorte(int idCorte, String apuntador) throws Exception {
         Corte corte = null;
         String sql = "SELECT a.id_enc_corte, FORMAT(a.fecha, 'yyyy/MM/dd') AS fecha, a.apuntador, " +
@@ -185,6 +183,7 @@ public class DAOCorte {
         }
         return corte;
     }
+
     public void actualizarEstadoCorte(int idCorte, int nuevoEstado) throws Exception {
         String sql = "UPDATE tbl_enc_corte SET Estado = ? WHERE id_enc_corte = ?";
         try (Connection cn = new Conexion().conectar();
@@ -213,6 +212,7 @@ public class DAOCorte {
         }
         return existe;
     }
+
     public boolean validarCortador(String codigoCortador) throws Exception {
         boolean cortadorValido = false;
         String sql = "SELECT COUNT(*) FROM [BD-APPS_PLANESA].[dbo].[tbl_empleado] WHERE Codigo_empleado = ? AND Grupo = 'CORTE'";
@@ -266,6 +266,7 @@ public class DAOCorte {
         }
         return variedadValido;
     }
+
     public boolean validarClasificador(String codigoClasificador) throws Exception {
         boolean validarClasificador = false;
         String sql = "SELECT COUNT(*) FROM [BD-APPS_PLANESA].[dbo].[tbl_empleado] WHERE Codigo_empleado = ? AND Grupo = 'CLASIFICADOR'";
@@ -293,14 +294,14 @@ public class DAOCorte {
         return validarClasificador;
     }
 
-    public int obtenerCantidadCajas(int idCorte) throws Exception {
-        int cantidadCajas = 0; // Inicializar la cantidad de cajas
+    public Double obtenerCantidadCajas(int idCorte) throws Exception {
+        double cantidadCajas = 0.0; // Inicializar la cantidad de cajas
         Conexion conexion = new Conexion(); // Asegúrate de inicializar la conexión aquí
         Connection cn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        String sql = "SELECT COUNT(*) AS cantidad FROM [BD-APPS_PLANESA].[dbo].[tbl_det_corte] WHERE Id_enc_corte = ?";
+        String sql = "SELECT SUM(cantida) AS cantidad FROM [BD-APPS_PLANESA].[dbo].[tbl_det_corte] WHERE Id_enc_corte = ?";
 
         try {
             cn = conexion.conectar(); // Crear la conexión
@@ -309,18 +310,33 @@ public class DAOCorte {
             rs = ps.executeQuery();
 
             if (rs.next()) {
-                cantidadCajas = rs.getInt("cantidad"); // Obtener la cantidad de cajas
+                cantidadCajas = rs.getDouble("cantidad"); // Obtener la cantidad de cajas
+                if (rs.wasNull()) {
+                    cantidadCajas = 0.0; // Asegurar que no se asignen valores nulos
+                }
             }
         } catch (Exception e) {
             throw new Exception("Error al obtener la cantidad de cajas: " + e.getMessage(), e);
         } finally {
             // Cerrar los recursos
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (cn != null) cn.close();
+            if (rs != null) try {
+                rs.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (ps != null) try {
+                ps.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (cn != null) try {
+                cn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        return cantidadCajas; // Devolver la cantidad de cajas
+        return cantidadCajas;
     }
 
     public List<Corte> listarCajasEscaneadasPorCortador(int idEncCorte) throws Exception {
@@ -381,6 +397,7 @@ public class DAOCorte {
 
         return lista;
     }
+
     public void actualizarEstado(Corte corte) throws Exception {
         Conexion conexion = new Conexion();
         Connection cn = null;
@@ -458,6 +475,7 @@ public class DAOCorte {
         }
         return corte;
     }
+
     public List<Corte> obtenerDetallesCorte(int idCorte) throws Exception {
         List<Corte> listaDetalles = new ArrayList<>();
 
@@ -497,16 +515,6 @@ public class DAOCorte {
 
         return listaDetalles;
     }
-
-
-
-
-
-
-
-
-
-
 
 
 }

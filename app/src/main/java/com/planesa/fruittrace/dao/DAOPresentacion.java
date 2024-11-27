@@ -14,15 +14,9 @@ public class DAOPresentacion {
     public List<Presentacion> listarPresentacion() throws Exception {
         List<Presentacion> presentacionList = new ArrayList<>();
         Conexion con = new Conexion();
-        Connection cn = null;
-        Statement st = null;
-        ResultSet rs = null;
         String sql = "SELECT * FROM tbl_presentacion WHERE visible = 1";
 
-        try {
-            cn = con.conectar();
-            st = cn.createStatement();
-            rs = st.executeQuery(sql);
+        try (Connection cn = con.conectar(); Statement st = cn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 Presentacion presentacion = new Presentacion();
                 presentacion.setId_presentacion(rs.getInt(1));
@@ -33,10 +27,6 @@ public class DAOPresentacion {
             }
         } catch (Exception e) {
             throw new Exception("Error al listar presentaciones: " + e.getMessage(), e);
-        } finally {
-            if (rs != null) rs.close();
-            if (st != null) st.close();
-            if (cn != null) cn.close();
         }
         return presentacionList;
     }

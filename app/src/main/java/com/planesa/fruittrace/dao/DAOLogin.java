@@ -1,13 +1,15 @@
 package com.planesa.fruittrace.dao;
 
+import android.util.Log;
+
 import com.planesa.fruittrace.data.Conexion;
 import com.planesa.fruittrace.model.Cargo;
 import com.planesa.fruittrace.model.Users;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import android.util.Log;
 
 public class DAOLogin {
 
@@ -46,7 +48,7 @@ public class DAOLogin {
         return usu;
     }
 
-    public int validar(String usuario, String contra) throws SQLException, ClassNotFoundException {
+    public int validar(String usuario, String contra) throws SQLException {
         int tipo = 0;
         Conexion con = new Conexion();
         Connection cn = null;

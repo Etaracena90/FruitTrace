@@ -14,15 +14,9 @@ public class DAOFinca {
     public List<Finca> listarFinca() throws Exception {
         List<Finca> fincaList = new ArrayList<>();
         Conexion con = new Conexion();
-        Connection cn = null;
-        Statement st = null;
-        ResultSet rs = null;
         String sql = "SELECT Id_finca, Nombre_Finca, Area_Finca, cc_NAV, cc_JP, Estado FROM tbl_finca WHERE estado = 1";
 
-        try {
-            cn = con.conectar();
-            st = cn.createStatement();
-            rs = st.executeQuery(sql);
+        try (Connection cn = con.conectar(); Statement st = cn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 Finca finca = new Finca();
                 finca.setId_Finca(rs.getInt("Id_finca"));
@@ -35,10 +29,6 @@ public class DAOFinca {
             }
         } catch (Exception e) {
             throw new Exception("Error al listar fincas: " + e.getMessage(), e);
-        } finally {
-            if (rs != null) rs.close();
-            if (st != null) st.close();
-            if (cn != null) cn.close();
         }
         return fincaList;
     }

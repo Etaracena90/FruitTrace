@@ -16,7 +16,7 @@ import java.util.List;
 
 public class CajasEscaneadasAdapter extends RecyclerView.Adapter<CajasEscaneadasAdapter.CajasViewHolder> {
 
-    private List<Corte> listaCajas;
+    private final List<Corte> listaCajas;
     private int expandedPosition = -1; // Posición del item expandido actualmente
 
     public CajasEscaneadasAdapter(List<Corte> listaCajas) {

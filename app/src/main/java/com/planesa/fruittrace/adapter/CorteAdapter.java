@@ -41,6 +41,8 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
     private List<Corte> corteList;
     private OnScanClickListener onScanClickListener;
     private Context context;
+    private OnDocumentoEnviadoListener onDocumentoEnviadoListener;
+
 
     public interface OnScanClickListener {
         void onScanClick(Corte corte);
@@ -48,10 +50,17 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
         void onCancelClick(Corte corte);
     }
 
+    public interface OnDocumentoEnviadoListener {
+        void onDocumentoEnviado();
+    }
+
     public CorteAdapter(List<Corte> corteList, OnScanClickListener onScanClickListener, Context context) {
         this.corteList = corteList;
         this.onScanClickListener = onScanClickListener;
         this.context = context;
+    }
+    public void setOnDocumentoEnviadoListener(OnDocumentoEnviadoListener listener) {
+        this.onDocumentoEnviadoListener = listener;
     }
 
     @NonNull
@@ -70,6 +79,18 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
         holder.tvItemApuntador.setText(corte.getApuntador() != null ? corte.getApuntador() : "Sin apuntador");
         holder.tvItemFinca.setText(corte.getNombrefinca() != null ? corte.getNombrefinca() : "Sin finca");
 
+        Integer estado = corte.getEstado(); // Obtener el estado
+        if (estado != null && estado == 3) { // Si el estado es "enviado"
+            holder.btnEnviar.setText("Enviado");
+            holder.btnEnviar.setEnabled(false);
+            holder.btnEnviar.setBackgroundColor(context.getResources().getColor(R.color.gray));
+        } else { // En caso contrario
+            holder.btnEnviar.setText("Enviar");
+            holder.btnEnviar.setEnabled(true);
+            holder.btnEnviar.setBackgroundColor(context.getResources().getColor(R.color.green));
+        }
+
+
         holder.btnCancelar.setOnClickListener(v -> {
             if (onScanClickListener != null) {
                 onScanClickListener.onCancelClick(corte);
@@ -86,6 +107,8 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
             // Implementar lógica manual aquí
         });
 
+
+
         holder.btnEnviar.setOnClickListener(v -> {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
@@ -101,8 +124,8 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
                     List<Corte> detallesCorte = daoCorte.obtenerDetallesCorte(corte.getId_enc_corte());
 
                     if (corteCompleto != null && detallesCorte != null) {
-                        File pdfFile = generarPDFConFormato(corteCompleto, detallesCorte); // Generar el PDF con los datos completos
-                        abrirPDF(pdfFile); // Abrir el PDF después de generarlo
+                        File pdfFile = generarPDFConFormato(corteCompleto, detallesCorte);
+                        abrirPDF(pdfFile);
                     } else {
                         throw new Exception("No se encontraron datos completos del corte o detalles.");
                     }
@@ -112,6 +135,12 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
                         holder.btnEnviar.setText("Enviado");
                         holder.btnEnviar.setEnabled(false);
                         holder.btnEnviar.setBackgroundColor(context.getResources().getColor(R.color.gray));
+
+                        // Notificar al listener que recargue la lista
+                        if (onDocumentoEnviadoListener != null) {
+                            onDocumentoEnviadoListener.onDocumentoEnviado();
+
+                        }
                     });
                 } catch (Exception e) {
                     new Handler(Looper.getMainLooper()).post(() -> {
@@ -124,6 +153,12 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
                 }
             });
         });
+
+
+
+
+
+
 
     }
 

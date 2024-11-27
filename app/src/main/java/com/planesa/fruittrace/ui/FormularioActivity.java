@@ -7,14 +7,26 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.planesa.fruittrace.R;
-import com.planesa.fruittrace.dao.*;
-import com.planesa.fruittrace.model.*;
+import com.planesa.fruittrace.dao.DAOCorte;
+import com.planesa.fruittrace.dao.DAOCultivo;
+import com.planesa.fruittrace.dao.DAODestino;
+import com.planesa.fruittrace.dao.DAOEtiqueta;
+import com.planesa.fruittrace.dao.DAOFinca;
+import com.planesa.fruittrace.dao.DAOPresentacion;
+import com.planesa.fruittrace.model.Corte;
+import com.planesa.fruittrace.model.Cultivo;
+import com.planesa.fruittrace.model.Destino;
+import com.planesa.fruittrace.model.Etiqueta;
+import com.planesa.fruittrace.model.Finca;
+import com.planesa.fruittrace.model.Presentacion;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -27,10 +39,10 @@ public class FormularioActivity extends AppCompatActivity {
     private Spinner spFinca, spCultivo, spPresentacion, spDestino, spEtiqueta;
     private CheckBox checkboxShowDia;
 
-    private int estado = 4;
+    private final int estado = 4;
     private Button btnRegistrar;
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 
     @Override
