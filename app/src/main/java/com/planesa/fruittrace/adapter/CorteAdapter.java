@@ -103,9 +103,6 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
             }
         });
 
-        holder.btnManual.setOnClickListener(v -> {
-            // Implementar lógica manual aquí
-        });
 
 
 
@@ -319,7 +316,6 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
             tvItemFinca = itemView.findViewById(R.id.tvItemFinca);
             btnCancelar = itemView.findViewById(R.id.btnCancelar);
             btnScan = itemView.findViewById(R.id.btnScan);
-            btnManual = itemView.findViewById(R.id.btnManual);
             btnEnviar = itemView.findViewById(R.id.btnEnviar);
         }
     }

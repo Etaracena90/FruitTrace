@@ -3,15 +3,23 @@ package com.planesa.fruittrace.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
+
+
 import com.planesa.fruittrace.R;
 import com.planesa.fruittrace.adapter.CorteAdapter;
 import com.planesa.fruittrace.dao.DAOCorte;
@@ -22,13 +30,15 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity implements CorteAdapter.OnScanClickListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, CorteAdapter.OnScanClickListener {
     private RecyclerView rvCorte;
     private Button btnNuevoFormulario;
     private FloatingActionButton btnRecargar;
     private CorteAdapter corteAdapter;
     private DAOCorte daoCorte;
     private ExecutorService executorService;
+
+    private DrawerLayout drawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +57,25 @@ public class MainActivity extends AppCompatActivity implements CorteAdapter.OnSc
 
         // Obtener el usuario autenticado
         String usuarioAutenticado = getIntent().getStringExtra("usuario");
-
-        // Agrega el log aquí para verificar que el usuario se esté pasando correctamente
         Log.d("MainActivity", "Usuario autenticado: " + usuarioAutenticado);
+
+        // Configurar el menú lateral (DrawerLayout)
+        drawerLayout = findViewById(R.id.drawerLayout);
+        NavigationView navigationView = findViewById(R.id.navigation_view);
+
+        // Configurar el NavigationView
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // Configurar el toggle del menú hamburguesa
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        // Mostrar el ícono del menú en la barra de acciones
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         // Cargar la lista de cortes basados en el usuario autenticado
         cargarListaCorte(usuarioAutenticado);
@@ -67,21 +93,50 @@ public class MainActivity extends AppCompatActivity implements CorteAdapter.OnSc
         // Configurar botón de recargar
         btnRecargar.setOnClickListener(v -> {
             Toast.makeText(this, "Recargando documentos...", Toast.LENGTH_SHORT).show();
-            cargarListaCorte(usuarioAutenticado); // Recargar la lista de documentos
+            cargarListaCorte(usuarioAutenticado);
         });
 
         corteAdapter = new CorteAdapter(new ArrayList<>(), this, this);
         corteAdapter.setOnDocumentoEnviadoListener(() -> cargarListaCorte(usuarioAutenticado));
         rvCorte.setAdapter(corteAdapter);
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.menu_home) {
+            Toast.makeText(this, "Home seleccionado", Toast.LENGTH_SHORT).show();
+        } else if (itemId == R.id.menu_settings) {
+            Toast.makeText(this, "Settings seleccionado", Toast.LENGTH_SHORT).show();
+        } else if (itemId == R.id.menu_logout) {
+            Toast.makeText(this, "Logout seleccionado", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Elemento no reconocido", Toast.LENGTH_SHORT).show();
+        }
+
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
 
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 100 && resultCode == RESULT_OK) {
-            // Recarga la lista de cortes después de registrar un formulario
             String usuarioAutenticado = getIntent().getStringExtra("usuario");
             cargarListaCorte(usuarioAutenticado);
         }
@@ -90,23 +145,18 @@ public class MainActivity extends AppCompatActivity implements CorteAdapter.OnSc
     private void cargarListaCorte(String usuario) {
         executorService.execute(() -> {
             try {
-                // Obtener la lista actualizada desde la base de datos
                 List<Corte> listaCorte = daoCorte.listarCortePorUsuario(usuario);
-                Log.d("MainActivity", "Cantidad de registros obtenidos: " + listaCorte.size());
-
                 runOnUiThread(() -> {
                     if (listaCorte != null && !listaCorte.isEmpty()) {
-                        // Actualizar o inicializar el adaptador con la nueva lista
                         if (corteAdapter == null) {
-                            corteAdapter = new CorteAdapter(listaCorte, this, this); // Inicializar el adaptador
+                            corteAdapter = new CorteAdapter(listaCorte, this, this);
                             rvCorte.setAdapter(corteAdapter);
                         } else {
-                            corteAdapter.updateData(listaCorte); // Actualizar los datos en el adaptador
+                            corteAdapter.updateData(listaCorte);
                         }
                     } else {
-                        // Manejar el caso de lista vacía
                         if (corteAdapter != null) {
-                            corteAdapter.updateData(listaCorte); // Pasar una lista vacía al adaptador
+                            corteAdapter.updateData(listaCorte);
                         }
                         Toast.makeText(MainActivity.this, "No hay documentos disponibles", Toast.LENGTH_SHORT).show();
                     }
@@ -120,10 +170,19 @@ public class MainActivity extends AppCompatActivity implements CorteAdapter.OnSc
     }
 
     @Override
+    public void onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public void onScanClick(Corte corte) {
         String usuarioAutenticado = getIntent().getStringExtra("usuario");
         Intent intent = new Intent(MainActivity.this, FormularioScanActivity.class);
-        intent.putExtra("id_corte", corte.getId_enc_corte()); // Pasar el ID del documento si es necesario
+        intent.putExtra("id_corte", corte.getId_enc_corte());
         intent.putExtra("usuario", usuarioAutenticado);
         Log.d("MainActivity", "ID del documento pasado: " + corte.getId());
         startActivity(intent);
@@ -137,17 +196,17 @@ public class MainActivity extends AppCompatActivity implements CorteAdapter.OnSc
                 .setPositiveButton("Sí", (dialog, which) -> {
                     executorService.execute(() -> {
                         try {
-                            daoCorte.actualizarEstadoCorte(corte.getId_enc_corte(), 5); // Cambiar el estado a 5
+                            daoCorte.actualizarEstadoCorte(corte.getId_enc_corte(), 5);
                             runOnUiThread(() -> {
                                 Toast.makeText(this, "Documento cancelado exitosamente", Toast.LENGTH_SHORT).show();
-                                cargarListaCorte(getIntent().getStringExtra("usuario")); // Recargar la lista
+                                cargarListaCorte(getIntent().getStringExtra("usuario"));
                             });
                         } catch (Exception e) {
                             runOnUiThread(() -> Toast.makeText(this, "Error al cancelar el documento: " + e.getMessage(), Toast.LENGTH_LONG).show());
                         }
                     });
                 })
-                .setNegativeButton("No", (dialog, which) -> dialog.dismiss()) // No hacer nada si selecciona "No"
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
                 .show();
     }
 }

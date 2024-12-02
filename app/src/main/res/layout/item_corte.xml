@@ -68,15 +68,6 @@
                 android:textColor="@android:color/white"
                 android:backgroundTint="@android:color/holo_blue_dark" />
 
-            <Button
-                android:id="@+id/btnManual"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="+ MANUAL"
-                android:textSize="10sp"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@android:color/holo_orange_dark" />
 
             <Button
                 android:id="@+id/btnEnviar"
