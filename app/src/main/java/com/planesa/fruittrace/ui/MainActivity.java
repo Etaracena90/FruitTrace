@@ -106,11 +106,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int itemId = item.getItemId();
 
         if (itemId == R.id.menu_home) {
-            Toast.makeText(this, "Home seleccionado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ya estás en Inicio", Toast.LENGTH_SHORT).show();
         } else if (itemId == R.id.menu_settings) {
-            Toast.makeText(this, "Settings seleccionado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Configuraciones seleccionadas", Toast.LENGTH_SHORT).show();
         } else if (itemId == R.id.menu_logout) {
-            Toast.makeText(this, "Logout seleccionado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cerrando sesión...", Toast.LENGTH_SHORT).show();
+        } else if (itemId == R.id.menu_unificar_envios) {
+            String usuarioAutenticado = getIntent().getStringExtra("usuario");
+            Intent intent = new Intent(MainActivity.this, UnificarEnviosActivity.class);
+            intent.putExtra("usuario", usuarioAutenticado); // Pasa el usuario autenticado
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT); // Reutiliza la actividad si ya existe
+            startActivity(intent);
         } else {
             Toast.makeText(this, "Elemento no reconocido", Toast.LENGTH_SHORT).show();
         }
@@ -118,6 +124,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
 
 
     @Override

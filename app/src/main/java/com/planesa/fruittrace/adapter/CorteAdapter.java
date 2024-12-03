@@ -306,7 +306,7 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
 
     public static class CorteViewHolder extends RecyclerView.ViewHolder {
         TextView tvNumeroDocumento, tvItemFecha, tvItemApuntador, tvItemFinca;
-        Button btnCancelar, btnScan, btnManual, btnEnviar;
+        Button btnCancelar, btnScan, btnEnviar;
 
         public CorteViewHolder(@NonNull View itemView) {
             super(itemView);

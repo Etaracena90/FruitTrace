@@ -49,8 +49,8 @@ public class Corte implements Serializable {
     String Total_a_pagar_cooperativa;
     String Tipo_planilla;
     Integer Estado_envio;
-    String No_envio_unificado;
-    String No_envio;
+    Integer No_envio_unificado;
+    Integer No_envio;
     String Fecha_envio_unificado;
     Integer Estado_envio_unificado;
     String ruta;
@@ -430,19 +430,19 @@ public class Corte implements Serializable {
         this.Estado_envio = Estado_envio;
     }
 
-    public String getNo_envio_unificado() {
+    public int getNo_envio_unificado() {
         return No_envio_unificado;
     }
 
-    public void setNo_envio_unificado(String No_envio_unificado) {
+    public void setNo_envio_unificado(int No_envio_unificado) {
         this.No_envio_unificado = No_envio_unificado;
     }
 
-    public String getNo_envio() {
+    public int getNo_envio() {
         return No_envio;
     }
 
-    public void setNo_envio(String No_envio) {
+    public void setNo_envio(int No_envio) {
         this.No_envio = No_envio;
     }
 

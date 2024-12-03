@@ -26,7 +26,8 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
-
+        <activity android:name=".ui.UnificarEnviosActivity" />
+        <activity android:name=".ui.SeleccionarEnvioActivity" />
         <activity
             android:name=".ui.LoginActivity"
             android:exported="true"
@@ -36,6 +37,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
 
         <!-- Declaración de MainActivity -->
         <activity android:name=".ui.MainActivity" />

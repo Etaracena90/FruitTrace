@@ -3,6 +3,7 @@ package com.planesa.fruittrace.dao;
 import com.planesa.fruittrace.data.Conexion;
 import com.planesa.fruittrace.model.Corte;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -515,6 +516,145 @@ public class DAOCorte {
 
         return listaDetalles;
     }
+
+    public List<Corte> MostrarDocumento(Corte corte) {
+
+        Conexion conexion = new Conexion();
+        Connection cn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<Corte> listcorte = new ArrayList<>();
+        try {
+            cn = conexion.conectar();
+            ps = cn.prepareCall("{ CALL sp_mostrar_envio_unificado(?) }");
+            ps.setString(1, corte.getApuntador());
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Corte cort = new Corte();
+                cort.setId_enc_corte(rs.getInt(1));
+                cort.setFecha(rs.getString(2));
+                cort.setApuntador(rs.getString(3));
+                cort.setEstado(rs.getInt(4));
+                listcorte.add(cort);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (cn != null) cn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return listcorte;
+    }
+
+    public void Generar_Envio_unificado(Corte corte) throws Exception {
+        con = new Conexion();
+
+        try {
+            cn = con.conectar();
+            CallableStatement proc = cn.prepareCall("{ CALL sp_generar_envio_unificado(?,?,?)}");
+            proc.setString(1, corte.getApuntador());
+            proc.setString(2, corte.getFecha());
+            proc.setInt(3, corte.getEstado());
+            proc.executeUpdate();
+        } catch (Exception e) {
+            throw new Exception("Error al generar el documento: " + e.getMessage(), e);
+        } finally {
+            if (cn != null) cn.close();
+        }
+    }
+
+    public List<Corte> listarEnviosPorApuntador(String apuntador) throws Exception {
+        List<Corte> listcorte = new ArrayList<>();
+        String sql = "{ CALL sp_mostrar_envios(?) }"; // Procedimiento almacenado que espera el nombre del apuntador
+
+        try (Connection cn = new Conexion().conectar();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, apuntador); // Enviar el nombre del apuntador al procedimiento almacenado
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Corte corte = new Corte();
+                corte.setId_enc_corte(rs.getInt(1));
+                corte.setFecha(rs.getString(2));
+                corte.setApuntador(rs.getString(3));
+                corte.setCantidad(rs.getDouble(4));
+                corte.setLibras(rs.getDouble(5));
+                corte.setNombre_estado(rs.getString(6));
+                listcorte.add(corte);
+            }
+
+        } catch (Exception e) {
+            throw new Exception("Error al listar envíos por apuntador: " + e.getMessage(), e);
+        }
+        return listcorte;
+    }
+
+    public void Unificar_envios(Corte corte) throws Exception {
+        Connection cn = null;
+        CallableStatement proc = null;
+
+        try {
+            // Conectar a la base de datos
+            cn = new Conexion().conectar();
+
+            // Verificar si el documento ya existe
+            String checkSql = "SELECT COUNT(*) FROM tbl_det_envios WHERE id_enc_corte = ?";
+            try (PreparedStatement checkPs = cn.prepareStatement(checkSql)) {
+                checkPs.setInt(1, corte.getNo_envio());
+                ResultSet rs = checkPs.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    throw new Exception("El documento con ID " + corte.getNo_envio() + " ya está unificado.");
+                }
+            }
+
+            // Procedimiento almacenado para insertar
+            proc = cn.prepareCall("{ CALL sp_insertar_det_envios(?,?,?) }");
+            proc.setInt(1, corte.getNo_envio_unificado()); // Número de envío unificado
+            proc.setInt(2, corte.getNo_envio()); // Número del envío
+            proc.setString(3, corte.getFecha_envio_unificado()); // Fecha del envío unificado
+
+            proc.executeUpdate(); // Ejecutar el procedimiento almacenado
+
+        } catch (SQLException e) {
+            throw new Exception("Error al unificar envíos: " + e.getMessage(), e);
+        } finally {
+            if (proc != null) proc.close();
+            if (cn != null) cn.close();
+        }
+    }
+
+
+    public void ActualizarEnc_Envio_unificado(Corte corte) throws Exception {
+        try (Connection cn = new Conexion().conectar()) {
+            CallableStatement proc = cn.prepareCall("{ CALL sp_actualizar_enc_envio_unificado(?,?) }");
+            proc.setInt(1,corte.getNo_envio_unificado());
+            proc.setInt(2, corte.getEstado_envio_unificado());
+            proc.executeUpdate();
+        } catch (Exception e) {
+            throw new Exception("Error al actualizar estado del envío unificado: " + e.getMessage(), e);
+        }
+    }
+
+    public void ActualizarEnc_Envio(Corte corte) throws Exception {
+        try (Connection cn = new Conexion().conectar()) {
+            CallableStatement proc = cn.prepareCall("{ CALL sp_actualizar_enc_corte(?,?) }");
+            proc.setInt(1, corte.getNo_envio());
+            proc.setInt(2, corte.getEstado_envio());
+            proc.executeUpdate();
+        } catch (Exception e) {
+            throw new Exception("Error al actualizar estado del envío: " + e.getMessage(), e);
+        }
+    }
+
+
+
+
 
 
 }
