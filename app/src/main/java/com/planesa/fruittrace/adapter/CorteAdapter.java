@@ -111,16 +111,16 @@ public class CorteAdapter extends RecyclerView.Adapter<CorteAdapter.CorteViewHol
             executor.execute(() -> {
                 DAOCorte daoCorte = new DAOCorte();
                 try {
-                    // Actualizar el estado del documento
-                    corte.setEstado(3);
-                    corte.setEstado_envio(7);
-                    daoCorte.actualizarEstado(corte);
+
 
                     // Obtener el detalle completo del corte y sus datos
                     Corte corteCompleto = daoCorte.obtenerDetalleCorteCompleto(corte.getId_enc_corte());
                     List<Corte> detallesCorte = daoCorte.obtenerDetallesCorte(corte.getId_enc_corte());
 
                     if (corteCompleto != null && detallesCorte != null) {
+                        corte.setEstado(3);
+                        corte.setEstado_envio(7);
+                        daoCorte.actualizarEstado(corte);
                         File pdfFile = generarPDFConFormato(corteCompleto, detallesCorte);
                         abrirPDF(pdfFile);
                     } else {

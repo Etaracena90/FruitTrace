@@ -27,7 +27,6 @@ public class SeleccionarEnvioActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private SeleccionarEnviosAdapter adapter;
-    private List<Corte> listaDocumentos = new ArrayList<>();
     private DAOCorte daoCorte;
     private Button btnGuardarSeleccion;
 
@@ -82,16 +81,13 @@ public class SeleccionarEnvioActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     if (listaDocumentos != null && !listaDocumentos.isEmpty()) {
                         // Configurar el adaptador con los documentos obtenidos
-                        if (adapter == null) {
-                            adapter = new SeleccionarEnviosAdapter(listaDocumentos, this);
-                            recyclerView.setAdapter(adapter);
-                        } else {
-                            adapter.updateData(listaDocumentos);
-                        }
+                        adapter = new SeleccionarEnviosAdapter(listaDocumentos, this);
+                        recyclerView.setAdapter(adapter);
                     } else {
                         // Mostrar un mensaje si no hay documentos
-                        Toast.makeText(this, "No hay documentos disponibles", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "No hay documentos disponibles para unificar.", Toast.LENGTH_SHORT).show();
                         Log.w("SeleccionarEnvio", "No se encontraron documentos para el usuario: " + usuario);
+                        finish(); // Regresar al listado anterior
                     }
                 });
             } catch (Exception e) {
@@ -112,11 +108,16 @@ public class SeleccionarEnvioActivity extends AppCompatActivity {
     }
 
     private void guardarSeleccion(Integer noEnvioUnificado) {
+        if (adapter == null) {
+            Toast.makeText(this, "No hay documentos para guardar.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // Obtener los documentos seleccionados desde el adaptador
         Set<Integer> seleccionados = adapter.getDocumentosSeleccionados();
         if (seleccionados.isEmpty()) {
-            Toast.makeText(this, "Seleccione al menos un documento", Toast.LENGTH_SHORT).show();
-            Log.w("SeleccionarEnvio", "No se seleccionaron documentos");
+            Toast.makeText(this, "Seleccione al menos un documento.", Toast.LENGTH_SHORT).show();
+            Log.w("SeleccionarEnvio", "No se seleccionaron documentos.");
             return;
         }
 
@@ -157,5 +158,4 @@ public class SeleccionarEnvioActivity extends AppCompatActivity {
             }
         });
     }
-
 }

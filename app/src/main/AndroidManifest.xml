@@ -11,9 +11,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher_scan"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher_scan_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FruitTrace">
 
@@ -26,8 +26,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
         <activity android:name=".ui.UnificarEnviosActivity" />
         <activity android:name=".ui.SeleccionarEnvioActivity" />
+        <activity android:name=".ui.ListaUnificadosActivity" />
         <activity
             android:name=".ui.LoginActivity"
             android:exported="true"

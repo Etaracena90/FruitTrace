@@ -6,10 +6,12 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -20,28 +22,35 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.planesa.fruittrace.R;
-import com.planesa.fruittrace.adapter.CorteAdapter;
 import com.planesa.fruittrace.adapter.UnificarEnviosAdapter;
 import com.planesa.fruittrace.dao.DAOCorte;
 import com.planesa.fruittrace.model.Corte;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class UnificarEnviosActivity extends AppCompatActivity implements CorteAdapter.OnScanClickListener, NavigationView.OnNavigationItemSelectedListener {
-    private RecyclerView rvUnificarEnvios;
-    private Button btnCrearDocumento;
-    private FloatingActionButton btnRecargarUnificar;
+public class UnificarEnviosActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
+    private static final int SELECCIONAR_ENVIO_REQUEST_CODE = 100;
+
+    private RecyclerView rvUnificarEnvios;
+    private FloatingActionButton btnRecargarUnificar;
+    private ImageButton btnVerUnificados;
+    private Button btnNuevoDocumento;
     private DrawerLayout drawerLayout;
+
     private UnificarEnviosAdapter corteAdapter;
     private DAOCorte daoCorte;
     private ExecutorService executorService;
+
+    private TextView userNameTextView;
+    private TextView userEmailTextView;
+    private String usuarioLogeado;
+    private String nombreUsuario;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,8 +59,9 @@ public class UnificarEnviosActivity extends AppCompatActivity implements CorteAd
 
         // Inicializar vistas
         rvUnificarEnvios = findViewById(R.id.rvUnificarEnvios);
-        btnCrearDocumento = findViewById(R.id.btnNuevoDocumento);
         btnRecargarUnificar = findViewById(R.id.btnRecargarEnvios);
+        btnVerUnificados = findViewById(R.id.btnVerUnificados);
+        btnNuevoDocumento = findViewById(R.id.btnNuevoDocumento);
         drawerLayout = findViewById(R.id.drawerLayout);
         rvUnificarEnvios.setLayoutManager(new LinearLayoutManager(this));
 
@@ -59,11 +69,27 @@ public class UnificarEnviosActivity extends AppCompatActivity implements CorteAd
         daoCorte = new DAOCorte();
         executorService = Executors.newSingleThreadExecutor();
 
-        // Cargar la lista de envíos unificados
-        cargarListaEnvios();
+        // Obtener usuario logeado y nombre
+        usuarioLogeado = getIntent().getStringExtra("usuario");
+        nombreUsuario = getIntent().getStringExtra("nombre");
 
-        // Configurar el NavigationView
+        if (usuarioLogeado == null || usuarioLogeado.isEmpty()) {
+            Toast.makeText(this, "Usuario no recibido. Finalizando actividad.", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        // Configurar NavigationView y encabezado
         NavigationView navigationView = findViewById(R.id.navigation_view);
+        View headerView = navigationView.getHeaderView(0);
+        userNameTextView = headerView.findViewById(R.id.tvUserName);
+        userEmailTextView = headerView.findViewById(R.id.tvUserEmail);
+
+        // Asignar valores al encabezado
+        userNameTextView.setText(nombreUsuario != null ? nombreUsuario : "Usuario");
+        userEmailTextView.setText(usuarioLogeado != null ? usuarioLogeado : "email@dominio.com");
+
+        // Configurar NavigationView
         navigationView.setNavigationItemSelectedListener(this);
 
         // Configurar el toggle del menú hamburguesa
@@ -76,40 +102,45 @@ public class UnificarEnviosActivity extends AppCompatActivity implements CorteAd
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
+        // Cargar la lista de envíos unificados
+        cargarListaEnvios();
+
         // Configurar botón para crear un nuevo documento
-        btnCrearDocumento.setOnClickListener(v -> {
+        btnNuevoDocumento.setOnClickListener(v -> {
             new androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Confirmar creación")
                     .setMessage("¿Está seguro de que desea crear un nuevo documento?")
-                    .setPositiveButton("Sí", (dialog, which) -> {
-                        crearNuevoDocumento();
-                    })
+                    .setPositiveButton("Sí", (dialog, which) -> crearNuevoDocumento())
                     .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
                     .show();
         });
 
-        // Configurar botón de recargar
+        // Configurar botón para recargar documentos
         btnRecargarUnificar.setOnClickListener(v -> {
             Toast.makeText(this, "Recargando documentos...", Toast.LENGTH_SHORT).show();
             cargarListaEnvios();
+        });
+
+        // Configurar botón para ver documentos unificados
+        btnVerUnificados.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ListaUnificadosActivity.class);
+            intent.putExtra("usuario", usuarioLogeado);
+            startActivity(intent);
         });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        cargarListaEnvios(); // Recargar la lista al regresar a esta actividad
+        cargarListaEnvios();
     }
 
     private void crearNuevoDocumento() {
-        String usuarioAutenticado = getIntent().getStringExtra("usuario");
         String fechaActual = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-
-        // Estado predeterminado para el documento
         int estado = 4;
 
         Corte nuevoCorte = new Corte();
-        nuevoCorte.setApuntador(usuarioAutenticado);
+        nuevoCorte.setApuntador(usuarioLogeado);
         nuevoCorte.setFecha(fechaActual);
         nuevoCorte.setEstado(estado);
 
@@ -119,84 +150,67 @@ public class UnificarEnviosActivity extends AppCompatActivity implements CorteAd
 
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Documento creado exitosamente", Toast.LENGTH_SHORT).show();
-                    cargarListaEnvios(); // Recargar la lista para mostrar el nuevo documento
+                    cargarListaEnvios();
                 });
             } catch (Exception e) {
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Error al crear documento: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> Toast.makeText(this, "Error al crear documento: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         });
     }
 
-
     private void cargarListaEnvios() {
-        // Obtener el usuario autenticado desde el Intent
-        String usuarioAutenticado = getIntent().getStringExtra("usuario");
-
         executorService.execute(() -> {
             try {
-                // Crear un objeto Corte para filtrar por apuntador
-                Corte corteFiltro = new Corte();
-                corteFiltro.setApuntador(usuarioAutenticado); // Usar el usuario autenticado como apuntador
+                Corte filtroCorte = new Corte();
+                filtroCorte.setApuntador(usuarioLogeado);
 
-                // Llamar al método del DAO para obtener la lista de documentos
-                List<Corte> listaCorte = daoCorte.MostrarDocumento(corteFiltro);
+                List<Corte> listaCorte = daoCorte.MostrarDocumento(filtroCorte);
 
-                // Actualizar la UI en el hilo principal
                 runOnUiThread(() -> {
                     if (listaCorte != null && !listaCorte.isEmpty()) {
                         if (corteAdapter == null) {
-                            String usuarioLogeado = getIntent().getStringExtra("usuario");
-                            corteAdapter = new UnificarEnviosAdapter(listaCorte,this, usuarioLogeado); // Configurar el adaptador
-                            rvUnificarEnvios.setAdapter(corteAdapter); // Asignar el adaptador al RecyclerView
+                            corteAdapter = new UnificarEnviosAdapter(listaCorte, this, usuarioLogeado);
+                            rvUnificarEnvios.setAdapter(corteAdapter);
                         } else {
-                            corteAdapter.updateData(listaCorte); // Actualizar los datos del adaptador
+                            corteAdapter.updateData(listaCorte);
                         }
                     } else {
-                        Toast.makeText(this, "No hay documentos disponibles", Toast.LENGTH_SHORT).show();
+                        if (corteAdapter != null) {
+                            corteAdapter.updateData(listaCorte);
+                        }
+                        Toast.makeText(this, "No hay documentos disponibles.", Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (Exception e) {
-                // Manejar errores en el hilo principal
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Error al cargar la lista: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> Toast.makeText(this, "Error al cargar documentos: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         });
     }
 
-
-    @Override
-    public void onScanClick(Corte corte) {
-        Toast.makeText(this, "Clic en documento: " + corte.getId_enc_corte(), Toast.LENGTH_SHORT).show();
-        // Aquí puedes agregar la lógica para manejar el clic en un elemento.
-    }
-
-    @Override
-    public void onCancelClick(Corte corte) {
-
-    }
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
 
         if (itemId == R.id.menu_home) {
-            // Navegar de vuelta a MainActivity
             Intent intent = new Intent(this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT); // Reutiliza la actividad si ya existe
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         } else if (itemId == R.id.menu_settings) {
             Toast.makeText(this, "Configuraciones seleccionadas", Toast.LENGTH_SHORT).show();
         } else if (itemId == R.id.menu_logout) {
-            Toast.makeText(this, "Cerrando sesión...", Toast.LENGTH_SHORT).show();
+            cerrarSesion();
         }
 
-        drawerLayout.closeDrawer(GravityCompat.START); // Cerrar el menú después de seleccionar
+        drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
-
+    private void cerrarSesion() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
@@ -211,19 +225,11 @@ public class UnificarEnviosActivity extends AppCompatActivity implements CorteAd
         return super.onOptionsItemSelected(item);
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDocumentoId, tvFecha;
-        Button btnSeleccionar, btnCancelar;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-            tvDocumentoId = itemView.findViewById(R.id.tvDocumentoId);
-            tvFecha = itemView.findViewById(R.id.tvFecha);
-            btnSeleccionar = itemView.findViewById(R.id.btnSeleccionar);
-            btnCancelar = itemView.findViewById(R.id.btnCancelar);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdown();
         }
     }
-
-
-
 }

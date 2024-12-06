@@ -76,11 +76,11 @@ public class FormularioScanActivity extends AppCompatActivity {
 
             try {
                 double cantidadManual = Double.parseDouble(cantidadStr);
-                if (cantidadManual <= 0) {
-                    Toast.makeText(this, "La cantidad debe ser mayor a 0.", Toast.LENGTH_SHORT).show();
+                // Validar que la cantidad esté en el rango permitido
+                if (cantidadManual < 0.01 || cantidadManual > 0.99) {
+                    Toast.makeText(this, "La cantidad debe estar entre 0.01 y 0.99.", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
                 // Llama al método registerData con la cantidad válida
                 registerData(cantidadManual);
 
@@ -443,8 +443,9 @@ public class FormularioScanActivity extends AppCompatActivity {
 
                     try {
                         double cantidadManual = Double.parseDouble(cantidadStr);
-                        if (cantidadManual <= 0) {
-                            mostrarMensajeDialog("La cantidad debe ser mayor a cero.");
+
+                        if (cantidadManual <= 0.00 || cantidadManual > 0.99) {
+                                Toast.makeText(this, "La cantidad debe estar entre 0.01 y 0.99.", Toast.LENGTH_SHORT).show();
                             return;
                         }
                         // Registrar datos con cantidad manual
@@ -502,8 +503,8 @@ public class FormularioScanActivity extends AppCompatActivity {
                                 }
                                 try {
                                     cantidad = Double.parseDouble(cantidadStr);
-                                    if (cantidad <= 0) {
-                                        mostrarMensajeDialog("La cantidad debe ser mayor a cero.");
+                                    if (cantidad <= 0.00 || cantidad > 0.99)   {
+                                        mostrarMensajeDialog("Cantidad no Permitida debe estar entre 0.01 y 0.99");
                                         return;
                                     }
                                 } catch (NumberFormatException e) {
@@ -581,7 +582,8 @@ public class FormularioScanActivity extends AppCompatActivity {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                int result = daoCorte.RegistrarEscanCajasCorte(corte);
+                String usuarioLogeando = getIntent().getStringExtra("usuario");
+                int result = daoCorte.RegistrarEscanCajasCorte(corte,usuarioLogeando);
                 runOnUiThread(() -> {
                     if (result > 0) {
                         Toast.makeText(this, "Datos registrados exitosamente", Toast.LENGTH_SHORT).show();

@@ -5,6 +5,8 @@ public class Users {
     private String nombres;
     private String apellidos;
     private String users;
+
+    private String username;
     private String password;
     private String nombreCargo;
     private Cargo cargo;
@@ -27,6 +29,14 @@ public class Users {
 
     public void setNombres(String nombres) {
         this.nombres = nombres;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getApellidos() {

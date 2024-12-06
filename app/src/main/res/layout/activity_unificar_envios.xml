@@ -13,6 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <!-- RecyclerView para listar documentos -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvUnificarEnvios"
             android:layout_width="match_parent"
@@ -23,6 +24,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <!-- Botón para recargar envíos -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/btnRecargarEnvios"
             android:layout_width="wrap_content"
@@ -35,15 +37,36 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <Button
+        <!-- Botón para ver documentos unificados -->
+        <ImageButton
+            android:id="@+id/btnVerUnificados"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_hamburger_menu"
+            android:background="@drawable/rounded_button"
+            android:contentDescription="Ver unificados"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Botón para crear nuevo documento -->
+
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNuevoDocumento"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nuevo Documento"
+            android:text="Nuevo Unificado"
+            app:icon="@drawable/ic_add"
+            app:iconGravity="start"
+            app:iconPadding="8dp"
+            android:layout_marginBottom="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginBottom="16dp" />
+            app:layout_constraintEnd_toEndOf="parent" />
+
+
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

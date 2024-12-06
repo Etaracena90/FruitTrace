@@ -6,8 +6,10 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
-
 
 import com.planesa.fruittrace.R;
 import com.planesa.fruittrace.adapter.CorteAdapter;
@@ -39,11 +40,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ExecutorService executorService;
 
     private DrawerLayout drawerLayout;
+    private TextView userNameTextView;
+    private TextView userEmailTextView;
+
+    private String nombreUsuario;
+    private String usuarioAutenticado;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Configura el comportamiento personalizado del botón atrás
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    // Cierra el menú lateral si está abierto
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    // Minimiza la aplicación en lugar de cerrarla
+                    moveTaskToBack(true);
+                }
+            }
+        });
 
         // Inicializar vistas
         rvCorte = findViewById(R.id.rvCorte);
@@ -56,12 +77,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         executorService = Executors.newSingleThreadExecutor();
 
         // Obtener el usuario autenticado
-        String usuarioAutenticado = getIntent().getStringExtra("usuario");
+        usuarioAutenticado = getIntent().getStringExtra("usuario");
+        nombreUsuario = getIntent().getStringExtra("nombre"); // Supongo que estás pasando el nombre del usuario desde LoginActivity
         Log.d("MainActivity", "Usuario autenticado: " + usuarioAutenticado);
 
         // Configurar el menú lateral (DrawerLayout)
         drawerLayout = findViewById(R.id.drawerLayout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
+
+        // Configurar el encabezado del menú lateral
+        View headerView = navigationView.getHeaderView(0);
+        userNameTextView = headerView.findViewById(R.id.tvUserName);
+        userEmailTextView = headerView.findViewById(R.id.tvUserEmail);
+
+        // Asignar valores al encabezado del menú
+        userNameTextView.setText(nombreUsuario != null ? nombreUsuario : "Usuario");
+        userEmailTextView.setText(usuarioAutenticado != null ? usuarioAutenticado : "email@dominio.com");
 
         // Configurar el NavigationView
         navigationView.setNavigationItemSelectedListener(this);
@@ -110,11 +141,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (itemId == R.id.menu_settings) {
             Toast.makeText(this, "Configuraciones seleccionadas", Toast.LENGTH_SHORT).show();
         } else if (itemId == R.id.menu_logout) {
-            Toast.makeText(this, "Cerrando sesión...", Toast.LENGTH_SHORT).show();
+            cerrarSesion(); // Llama al método para cerrar sesión
         } else if (itemId == R.id.menu_unificar_envios) {
             String usuarioAutenticado = getIntent().getStringExtra("usuario");
             Intent intent = new Intent(MainActivity.this, UnificarEnviosActivity.class);
             intent.putExtra("usuario", usuarioAutenticado); // Pasa el usuario autenticado
+            intent.putExtra("nombre", nombreUsuario);
             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT); // Reutiliza la actividad si ya existe
             startActivity(intent);
         } else {
@@ -125,8 +157,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-
-
+    private void cerrarSesion() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Limpiar pila de actividades
+        startActivity(intent);
+        finish(); // Finalizar la actividad actual
+    }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {

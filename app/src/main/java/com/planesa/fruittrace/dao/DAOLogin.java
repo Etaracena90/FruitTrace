@@ -19,7 +19,7 @@ public class DAOLogin {
         Connection cn = null;
         Statement st = null;
         ResultSet rs = null;
-        String sql = "SELECT u.Id, c.Nombre_Cargo FROM tbl_users u INNER JOIN tbl_cargo c ON u.Tipo = c.Id_Cargo " +
+        String sql = "SELECT u.Id, c.Nombre_Cargo, u.UserName, u.Nombres, u.Apellidos FROM tbl_users u INNER JOIN tbl_cargo c ON u.Tipo = c.Id_Cargo " +
                 "WHERE u.Estado = 1 AND u.UserName = '" + user.getUsers() + "' AND u.Password = '" + user.getPassword() + "' AND u.Estado = 1";
 
         try {
@@ -32,6 +32,9 @@ public class DAOLogin {
                 usu.setUsers(user.getUsers());
                 usu.setCargo(new Cargo());
                 usu.getCargo().setNombreCargo(rs.getString("Nombre_Cargo"));
+                usu.setUsername(rs.getString("UserName"));
+                usu.setNombres(rs.getString("Nombres"));
+                usu.setApellidos(rs.getString("Apellidos"));
                 usu.setEstado(1);
             }
         } catch (Exception e) {

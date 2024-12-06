@@ -27,6 +27,10 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private DAOLogin daoLogin;
 
+    Users user = new Users();
+
+    private Users result ;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,10 +58,10 @@ public class LoginActivity extends AppCompatActivity {
 
     private void authenticateUser(String username, String password) {
         executorService.execute(() -> {
-            Users user = new Users();
+
             user.setUsers(username);
             user.setPassword(password);
-            Users result = daoLogin.identificar(user);
+            result = daoLogin.identificar(user);
 
             mainHandler.post(() -> {
                 if (result != null) {
@@ -67,7 +71,9 @@ public class LoginActivity extends AppCompatActivity {
                     if (username != null && !username.isEmpty()) {
                         // Navegar a MainActivity
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.putExtra("usuario", username);
+                        intent.putExtra("usuario", result.getUsername());
+                        intent.putExtra("nombre", result.getNombres()+" "+result.getApellidos());
+
                         startActivity(intent);
                         finish(); // Finalizar LoginActivity para que no se pueda volver atrás con el botón de retroceso
                     } else {

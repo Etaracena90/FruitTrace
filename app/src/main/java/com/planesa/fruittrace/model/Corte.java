@@ -5,6 +5,10 @@ import java.io.Serializable;
 public class Corte implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    // Nuevos campos
+    private String descripcion;
+
+    // Atributos existentes
     Integer item;
     Integer id;
     Integer id_enc_corte;
@@ -63,20 +67,31 @@ public class Corte implements Serializable {
     String preFijoDos;
     String codigoBarras;
 
+    // Constructor por defecto
     public Corte() {}
 
-    // Constructor que necesitas para la inserción
+    // Constructor adicional
     public Corte(String fecha, String apuntador, Integer finca, String cultivo, String presentacion, String destino, String etiqueta) {
         this.Fecha = fecha;
         this.apuntador = apuntador;
         this.finca = finca;
-        this.nombre_cultivo = cultivo; // Usa la propiedad correcta para almacenar el cultivo
+        this.nombre_cultivo = cultivo;
         this.presentacion = presentacion;
         this.destino = destino;
         this.etiqueta = etiqueta;
     }
 
-    // Getters y Setters
+    // Getter y Setter para descripcion
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    // Getters y Setters existentes
+    // (El resto de los getters y setters siguen igual que en tu código original)
 
     public Integer getItem() {
         return item;

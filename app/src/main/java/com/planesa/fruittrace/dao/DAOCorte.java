@@ -99,13 +99,13 @@ public class DAOCorte {
     }
 
 
-    public int RegistrarEscanCajasCorte(Corte corte) {
-        int resultado = 0; // Variable de retorno
-        Conexion con = new Conexion(); // Instancia de conexión
+    public int RegistrarEscanCajasCorte(Corte corte, String usuarioLogeado) {
+        int resultado = 0;
+        Conexion con = new Conexion();
         Connection cn = null;
         PreparedStatement ps = null;
 
-        String sql = "INSERT INTO [dbo].[tbl_det_corte](" +
+        String sqlInsert = "INSERT INTO [dbo].[tbl_det_corte](" +
                 "[Id_enc_corte], [fecha], [lote], [finca], [cultivo], " +
                 "[codigo_cortador], [codigo_clasificador], [destino], [presentacion], " +
                 "[etiqueta], [variedad], [cantida], [unidad_medida], [Dia]) " +
@@ -115,28 +115,58 @@ public class DAOCorte {
 
         try {
             cn = con.conectar();
-            ps = cn.prepareStatement(sql);
 
-            // Agregar datos de prueba
-            ps.setInt(1, corte.getId_enc_corte()); // Id_enc_corte (dato de prueba)
-            ps.setString(2, corte.getFecha()); // Fecha (dato de prueba)
-            ps.setString(3, corte.getLote()); // Lote (dato del objeto Corte)
-            ps.setString(4, corte.getNombrefinca()); // Finca (dato de prueba)
-            ps.setString(5, corte.getNombre_cultivo()); // Cultivo (dato de prueba)
-            ps.setString(6, corte.getCodigo_cortador()); // Código Cortador (dato del objeto Corte)
-            ps.setString(7, corte.getCodigo_clasificador()); // Código Clasificador (dato del objeto Corte)
-            ps.setString(8, corte.getDestino()); // Destino (dato de prueba)
-            ps.setString(9, corte.getPresentacion()); // Presentación (dato de prueba)
-            ps.setString(10, corte.getEtiqueta()); // Etiqueta (dato de prueba)
-            ps.setString(11, corte.getVariedad()); // Variedad (dato del objeto Corte)
-            ps.setDouble(12, corte.getCantidad()); // Cantidad (dato de prueba)
-            ps.setString(13, corte.getUnidad_medida()); // Unidad de Medida (dato de prueba)
-            ps.setString(14, "2024-11-20"); // Fecha para determinar el Día (dato de prueba)
+            // Validar que el documento pertenece al usuario y está en estado disponible
+            String sqlCheck = "SELECT COUNT(*) FROM tbl_enc_corte " +
+                    "WHERE id_enc_corte = ? AND apuntador = ? AND estado = 4";
+
+            PreparedStatement psCheck = cn.prepareStatement(sqlCheck);
+            psCheck.setInt(1, corte.getId_enc_corte());
+            psCheck.setString(2, usuarioLogeado);
+
+            ResultSet rsCheck = psCheck.executeQuery();
+
+            if (rsCheck.next() && rsCheck.getInt(1) == 0) {
+                throw new Exception("El documento no pertenece al usuario logeado, no está disponible o ya está procesado.");
+            }
+            rsCheck.close();
+            psCheck.close();
+
+            // Iniciar transacción
+            cn.setAutoCommit(false);
+
+            // Preparar el insert
+            ps = cn.prepareStatement(sqlInsert);
+            ps.setInt(1, corte.getId_enc_corte());
+            ps.setString(2, corte.getFecha());
+            ps.setString(3, corte.getLote());
+            ps.setString(4, corte.getNombrefinca());
+            ps.setString(5, corte.getNombre_cultivo());
+            ps.setString(6, corte.getCodigo_cortador());
+            ps.setString(7, corte.getCodigo_clasificador());
+            ps.setString(8, corte.getDestino());
+            ps.setString(9, corte.getPresentacion());
+            ps.setString(10, corte.getEtiqueta());
+            ps.setString(11, corte.getVariedad());
+            ps.setDouble(12, corte.getCantidad());
+            ps.setString(13, corte.getUnidad_medida());
+            ps.setString(14, corte.getFecha());
 
             int filasAfectadas = ps.executeUpdate();
-            resultado = (filasAfectadas > 0) ? 1 : 0; // Indicar éxito o fallo
+            if (filasAfectadas > 0) {
+                resultado = 1;
+            }
+
+            cn.commit(); // Confirmar transacción
 
         } catch (Exception e) {
+            try {
+                if (cn != null) {
+                    cn.rollback(); // Revertir transacción en caso de error
+                }
+            } catch (Exception rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
             e.printStackTrace();
         } finally {
             try {
@@ -148,6 +178,7 @@ public class DAOCorte {
         }
         return resultado;
     }
+
 
     public Corte leercorte(int idCorte, String apuntador) throws Exception {
         Corte corte = null;
@@ -216,7 +247,7 @@ public class DAOCorte {
 
     public boolean validarCortador(String codigoCortador) throws Exception {
         boolean cortadorValido = false;
-        String sql = "SELECT COUNT(*) FROM [BD-APPS_PLANESA].[dbo].[tbl_empleado] WHERE Codigo_empleado = ? AND Grupo = 'CORTE'";
+        String sql = "SELECT COUNT(*) FROM tbl_empleado WHERE Codigo_empleado = ? AND Grupo = 'CORTE'";
         Conexion con = new Conexion();
         Connection cn = null;
         PreparedStatement ps = null;
@@ -243,7 +274,7 @@ public class DAOCorte {
 
     public boolean validarVariedad(String codigoVariedad) throws Exception {
         boolean variedadValido = false;
-        String sql = "SELECT COUNT(*) FROM [BD-APPS_PLANESA].[dbo].[tbl_vcultivo] where vcb = ?";
+        String sql = "SELECT COUNT(*) FROM tbl_vcultivo where vcb = ?";
         Conexion con = new Conexion();
         Connection cn = null;
         PreparedStatement ps = null;
@@ -270,7 +301,7 @@ public class DAOCorte {
 
     public boolean validarClasificador(String codigoClasificador) throws Exception {
         boolean validarClasificador = false;
-        String sql = "SELECT COUNT(*) FROM [BD-APPS_PLANESA].[dbo].[tbl_empleado] WHERE Codigo_empleado = ? AND Grupo = 'CLASIFICADOR'";
+        String sql = "SELECT COUNT(*) FROM tbl_empleado WHERE Codigo_empleado = ? AND Grupo = 'CLASIFICADOR'";
         Conexion con = new Conexion();
         Connection cn = null;
         PreparedStatement ps = null;
@@ -302,7 +333,7 @@ public class DAOCorte {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        String sql = "SELECT SUM(cantida) AS cantidad FROM [BD-APPS_PLANESA].[dbo].[tbl_det_corte] WHERE Id_enc_corte = ?";
+        String sql = "SELECT SUM(cantida) AS cantidad FROM tbl_det_corte WHERE Id_enc_corte = ?";
 
         try {
             cn = conexion.conectar(); // Crear la conexión
@@ -404,7 +435,7 @@ public class DAOCorte {
         Connection cn = null;
         Statement st = null;
 
-        String sql = "UPDATE [dbo].[tbl_enc_corte] " +
+        String sql = "UPDATE tbl_enc_corte " +
                 "SET [estado] = '" + corte.getEstado() + "', " +
                 "[estado_envio] = '" + corte.getEstado_envio() + "' " +
                 "WHERE id_enc_corte = " + corte.getId_enc_corte() + " AND estatus_planilla IS NULL";
@@ -446,7 +477,7 @@ public class DAOCorte {
                 "INNER JOIN tbl_destino de ON de.codigo_barrad = b.destino " +
                 "INNER JOIN tbl_empleado e ON e.Codigo_empleado = b.codigo_cortador AND Grupo = 'CORTE' " +
                 "INNER JOIN tbl_etiqueta et ON et.codigo_barrae = a.etiqueta " +
-                "WHERE a.id_enc_corte = ? AND a.estado = 3 " +
+                "WHERE a.id_enc_corte = ? " +
                 "GROUP BY a.id_enc_corte, a.fecha, p.Nombre_presentacion, c.Nombre_Finca, b.cultivo, " +
                 "d.Nombre_VCultivo, b.unidad_medida, b.lote, l.Nombre_Lote_e, de.descripcion, " +
                 "et.Nombre_etiqueta, a.apuntador " +
@@ -476,6 +507,68 @@ public class DAOCorte {
         }
         return corte;
     }
+    public List<Corte> listarDetallesEnvioPorId(int idEnvio) throws Exception {
+        List<Corte> detalles = new ArrayList<>();
+        Conexion conexion = new Conexion();
+        Connection cn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        String sql = "SELECT env.id_enc_envios as id, FORMAT(env.fecha, 'yyyy/MM/dd') As 'fecha', c.Nombre_Finca, " +
+                "enc.apuntador, de.descripcion, p.Nombre_presentacion, et.Nombre_etiqueta, det.cultivo, det.lote, " +
+                "l.Nombre_Lote_e, d.Nombre_VCultivo, det.unidad_medida, SUM(det.cantida) as CANTIDAD " +
+                "FROM tbl_enc_envios env " +
+                "INNER JOIN tbl_det_envios deten ON deten.id_enc_envios = env.Id_enc_envios " +
+                "INNER JOIN tbl_det_corte det ON det.Id_enc_corte = deten.id_enc_corte " +
+                "INNER JOIN tbl_enc_corte enc ON enc.id_enc_corte = det.Id_enc_corte " +
+                "INNER JOIN tbl_finca c ON enc.finca = c.Id_Finca " +
+                "INNER JOIN tbl_vcultivo d ON d.vcb = det.variedad " +
+                "INNER JOIN tbl_presentacion p ON p.codigo_barrap = det.presentacion " +
+                "INNER JOIN tbl_lote_e l ON l.Codigo_Lote_e = det.lote " +
+                "INNER JOIN tbl_destino de ON de.codigo_barrad = det.destino " +
+                "INNER JOIN tbl_empleado e ON e.Codigo_empleado = det.codigo_cortador AND Grupo = 'CORTE' " +
+                "INNER JOIN tbl_etiqueta et ON et.codigo_barrae = enc.etiqueta " +
+                "WHERE env.Id_enc_envios = ? " +
+                "GROUP BY  env.id_enc_envios,env.fecha, c.Nombre_Finca, enc.apuntador, de.descripcion, p.Nombre_presentacion, " +
+                "et.Nombre_etiqueta, det.cultivo, det.lote, l.Nombre_Lote_e, d.Nombre_VCultivo, det.unidad_medida " +
+                "ORDER BY de.descripcion, p.Nombre_presentacion, et.Nombre_etiqueta";
+
+        try {
+            cn = conexion.conectar(); // Conexión a la base de datos
+            ps = cn.prepareStatement(sql);
+            ps.setInt(1, idEnvio); // Parámetro del ID del envío
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Corte corte = new Corte();
+                corte.setNo_envio_unificado(rs.getInt("id"));
+                corte.setFecha(rs.getString("fecha"));
+                corte.setNombrefinca(rs.getString("Nombre_Finca"));
+                corte.setApuntador(rs.getString("apuntador"));
+                corte.setDescripcion(rs.getString("descripcion"));
+                corte.setNombre_presentacion(rs.getString("Nombre_presentacion"));
+                corte.setNombre_etiqueta(rs.getString("Nombre_etiqueta"));
+                corte.setCultivo(rs.getString("cultivo"));
+                corte.setLote(rs.getString("lote"));
+                corte.setNombre_lote(rs.getString("Nombre_Lote_e"));
+                corte.setVariedad(rs.getString("Nombre_VCultivo"));
+                corte.setUnidad_medida(rs.getString("unidad_medida"));
+                corte.setCantidad(rs.getDouble("CANTIDAD"));
+
+                detalles.add(corte);
+            }
+        } catch (Exception e) {
+            throw new Exception("Error al listar detalles del envío: " + e.getMessage(), e);
+        } finally {
+            // Cerrar recursos
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+            if (cn != null) cn.close();
+        }
+
+        return detalles;
+    }
+
 
     public List<Corte> obtenerDetallesCorte(int idCorte) throws Exception {
         List<Corte> listaDetalles = new ArrayList<>();
@@ -550,6 +643,43 @@ public class DAOCorte {
         }
         return listcorte;
     }
+
+    public List<Corte> MostrarDocumentoCerrados(Corte corte) {
+        Conexion con = new Conexion();
+        Connection cn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<Corte> listcorte = new ArrayList<>();
+
+        try {
+            cn = con.conectar(); // Conexión a la base de datos
+            String query = "{ CALL sp_mostrar_envio_unificado_cerrado(?) }";
+            ps = cn.prepareCall(query);
+            ps.setString(1, corte.getApuntador()); // Apuntador (usuario)
+
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Corte cort = new Corte();
+                cort.setId_enc_corte(rs.getInt(1));
+                cort.setFecha(rs.getString(2));
+                cort.setApuntador(rs.getString(3));
+                cort.setEstado(rs.getInt(4));
+                listcorte.add(cort);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // Para depuración
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (cn != null) cn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return listcorte;
+    }
+
 
     public void Generar_Envio_unificado(Corte corte) throws Exception {
         con = new Conexion();

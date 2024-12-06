@@ -11,7 +11,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Conexion {
-    private static final String cadenaConexion = "jdbc:jtds:sqlserver://143.208.182.173:11433/BD-APPS_PLANESA;user=sa;password=Sp3c1@l$$";
+   // private static final String cadenaConexion = "jdbc:jtds:sqlserver://143.208.182.173:11433/BD-APPS_PLANESA;user=sa;password=Sp3c1@l$$";
+    private static final String cadenaConexion = "jdbc:jtds:sqlserver://143.208.182.173:11433/BD-APPS_PLANESA-PRUEBAS;user=sa;password=Sp3c1@l$$";
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Connection con = null;
